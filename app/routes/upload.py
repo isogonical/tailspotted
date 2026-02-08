@@ -6,13 +6,14 @@ from arq.connections import RedisSettings
 from fastapi import APIRouter, Depends, Request, UploadFile
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import and_, select
+from sqlalchemy import and_, delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_db
 from app.models.flight import Flight
-from app.models.scrape_job import ScrapeJob
+from app.models.photo import CandidatePhoto, FlightPhotoMatch, UserDecision
+from app.models.scrape_job import ScrapeJob, ScrapeRun
 from app.services.csv_parser import parse_csv
 from app.services.scrape_orchestrator import create_scrape_jobs_for_batch
 
@@ -110,4 +111,22 @@ async def upload_csv(request: Request, file: UploadFile, db: AsyncSession = Depe
             "jobs_created": jobs_created,
             "batch_id": str(batch_id),
         },
+    )
+
+
+@router.post("/reset", response_class=HTMLResponse)
+async def reset_all(request: Request, db: AsyncSession = Depends(get_db)):
+    """Delete all flights, photos, matches, decisions, and scrape jobs."""
+    # Delete in FK-safe order
+    await db.execute(delete(UserDecision))
+    await db.execute(delete(FlightPhotoMatch))
+    await db.execute(delete(CandidatePhoto))
+    await db.execute(delete(ScrapeRun))
+    await db.execute(delete(ScrapeJob))
+    await db.execute(delete(Flight))
+    await db.commit()
+
+    return templates.TemplateResponse(
+        "partials/reset_result.html",
+        {"request": request},
     )

@@ -29,6 +29,20 @@
 
 <div id="upload-result"></div>
 
+<div class="danger-zone">
+    <h3>Danger Zone</h3>
+    <p>Permanently delete all flights, photos, matches, and scrape jobs. This cannot be undone.</p>
+    <button class="btn btn-danger"
+            hx-post="/reset"
+            hx-target="#reset-result"
+            hx-swap="innerHTML"
+            hx-confirm="Are you sure? This will permanently delete ALL flights, photos, and scrape data.">
+        <span class="htmx-indicator">Deleting...</span>
+        <span>Delete All Data</span>
+    </button>
+    <div id="reset-result"></div>
+</div>
+
 <script>
 (function() {
     const zone = document.getElementById('drop-zone');

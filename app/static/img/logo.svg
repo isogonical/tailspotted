@@ -1,55 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-166.94 -266.53 600 800" width="600px" height="800px">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 220" width="160" height="220">
   <defs>
-    <filter id="windowGlow">
-      <feGaussianBlur stdDeviation="20" result="coloredBlur"/>
-      <feMerge>
-        <feMergeNode in="coloredBlur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-    <radialGradient id="glassShine" cx="45%" cy="35%">
-      <stop offset="0" style="stop-color:#3d6a88;stop-opacity:0.5"/>
-      <stop offset="1" style="stop-color:#1a3a52;stop-opacity:0.2"/>
-    </radialGradient>
-    <filter id="tailGlow">
-      <feGaussianBlur stdDeviation="6" result="blur"/>
-      <feMerge>
-        <feMergeNode in="blur"/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
-    </filter>
-    <linearGradient id="tailGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1"/>
-      <stop offset="100%" style="stop-color:#b0bec5;stop-opacity:1"/>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0e1e30"/>
+      <stop offset="100%" stop-color="#1e3a58"/>
     </linearGradient>
-    <clipPath id="windowClip">
-      <rect x="-113.94" y="-213.53" width="494" height="694" rx="85"/>
+    <linearGradient id="tail" x1="0.15" y1="0" x2="0.85" y2="1">
+      <stop offset="0%" stop-color="#f0f2f4"/>
+      <stop offset="100%" stop-color="#b8c4cc"/>
+    </linearGradient>
+    <clipPath id="window-clip">
+      <rect x="16" y="10" width="128" height="180" rx="64"/>
     </clipPath>
   </defs>
 
-  <!-- Window glow -->
-  <rect x="-166.94" y="-266.53" width="600" height="800" rx="120" fill="none" stroke="#5ba8ff" stroke-width="3" opacity="0.4" filter="url(#windowGlow)"/>
+  <!-- Window pane (sky) -->
+  <rect x="16" y="10" width="128" height="180" rx="64" fill="url(#sky)"/>
 
-  <!-- Outer frame -->
-  <rect x="-158.94" y="-258.53" width="584" height="784" rx="115" fill="none" stroke="#5ba8ff" stroke-width="16"/>
-
-  <!-- Inner frame -->
-  <rect x="-133.94" y="-233.53" width="534" height="734" rx="100" fill="none" stroke="#4a90d9" stroke-width="10"/>
-
-  <!-- Glass pane -->
-  <rect x="-113.94" y="-213.53" width="494" height="694" rx="85" fill="#234a68" opacity="0.7"/>
-  <rect x="-113.94" y="-213.53" width="494" height="694" rx="85" fill="url(#glassShine)"/>
-
-  <!-- Tail silhouette (clipped to window, offset for natural glimpse) -->
-  <g clip-path="url(#windowClip)">
-    <g transform="translate(170, 95) scale(1.45) translate(-140.5, -116)" opacity="0.88" filter="url(#tailGlow)">
-      <path d="M -67.964 -27.341 L 68.078 258.813 L 315.357 258.025 C 343.432 260.794 349.021 234.468 326.522 216.487 L 74.423 -26.74 L -67.964 -27.341 Z"
-        fill="url(#tailGrad)" stroke="none"/>
-    </g>
+  <!-- Tail through window -->
+  <g clip-path="url(#window-clip)">
+    <path d="M30 44 L58 200 L168 198 C180 200 182 187 174 180 L67 44 Z" fill="url(#tail)"/>
   </g>
 
-  <!-- Window shade pull tab -->
-  <rect x="108" y="455" width="50" height="14" rx="7" fill="#4a90d9" opacity="0.6"/>
-  <rect x="118" y="459" width="30" height="6" rx="3" fill="#5ba8ff" opacity="0.4"/>
+  <!-- Window frame -->
+  <rect x="16" y="10" width="128" height="180" rx="64" fill="none" stroke="#6a9cc0" stroke-width="3.5"/>
+
+  <!-- Window shade tab -->
+  <rect x="60" y="178" width="40" height="6" rx="3" fill="#4a7aa0" opacity="0.5"/>
 </svg>

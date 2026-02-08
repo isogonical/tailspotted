@@ -35,10 +35,19 @@ def _parse_time(raw: str) -> time | None:
     return None
 
 
+_DATE_FORMATS = ["%Y-%m-%d", "%m/%d/%y", "%m/%d/%Y", "%d/%m/%Y", "%d-%m-%Y"]
+
+
 def _parse_date(raw: str) -> date | None:
     if not raw:
         return None
-    return datetime.strptime(raw.strip(), "%Y-%m-%d").date()
+    raw = raw.strip()
+    for fmt in _DATE_FORMATS:
+        try:
+            return datetime.strptime(raw, fmt).date()
+        except ValueError:
+            continue
+    return None
 
 
 def _compute_utc_times(
