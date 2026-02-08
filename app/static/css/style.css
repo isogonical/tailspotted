@@ -109,6 +109,16 @@ code, .mono {
     background: var(--bg-elevated);
 }
 
+.nav-badge-error {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: #e53935;
+    border-radius: 50%;
+    margin-left: 6px;
+    box-shadow: 0 0 6px rgba(229, 57, 53, 0.4);
+}
+
 .nav-badge {
     display: inline-flex;
     align-items: center;

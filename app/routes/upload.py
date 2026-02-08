@@ -24,6 +24,28 @@ _REDIS_KEY_URL = "ts:airtrail_url"
 _REDIS_KEY_API_KEY = "ts:airtrail_api_key"
 _REDIS_KEY_SCHEDULE = "ts:airtrail_schedule"
 _REDIS_KEY_LAST_SYNC = "ts:airtrail_last_sync"
+_REDIS_KEY_CONN_STATUS = "ts:airtrail_conn_status"
+
+
+async def _set_conn_status(status: str) -> None:
+    """Set AirTrail connection status in Redis ('ok' or 'error')."""
+    r = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
+    if status == "ok":
+        await r.set(_REDIS_KEY_CONN_STATUS, "ok")
+    else:
+        await r.set(_REDIS_KEY_CONN_STATUS, "error")
+    await r.aclose()
+
+
+@router.get("/import/status", response_class=HTMLResponse)
+async def import_status():
+    """Return a red dot badge if AirTrail connection has an error."""
+    r = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
+    status = await r.get(_REDIS_KEY_CONN_STATUS)
+    await r.aclose()
+    if status == "error":
+        return HTMLResponse('<span class="nav-badge-error"></span>')
+    return HTMLResponse("")
 
 
 @router.get("/import", response_class=HTMLResponse)
@@ -115,6 +137,7 @@ async def airtrail_check(request: Request):
         )
 
     ok, message = await test_airtrail_connection(cfg["url"], cfg["api_key"])
+    await _set_conn_status("ok" if ok else "error")
     return templates.TemplateResponse(
         "partials/airtrail_status.html",
         _airtrail_ctx(request, cfg, connection_ok=ok, connection_message=message),
@@ -161,6 +184,7 @@ async def airtrail_save(
     r = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
     await r.set(_REDIS_KEY_URL, url)
     await r.set(_REDIS_KEY_API_KEY, api_key)
+    await r.set(_REDIS_KEY_CONN_STATUS, "ok")
     await r.aclose()
 
     cfg = await _read_airtrail_config()
@@ -187,6 +211,7 @@ async def airtrail_sync(request: Request, db: AsyncSession = Depends(get_db)):
         flights, batch_id, format_info = await sync_airtrail_flights(cfg["url"], cfg["api_key"])
     except Exception as e:
         logger.error(f"AirTrail sync error: {e}")
+        await _set_conn_status("error")
         return templates.TemplateResponse(
             "partials/airtrail_status.html",
             _airtrail_ctx(request, cfg, connection_ok=False, connection_message=f"Sync failed: {e}"),
@@ -194,10 +219,11 @@ async def airtrail_sync(request: Request, db: AsyncSession = Depends(get_db)):
 
     stats = await import_flights(flights, batch_id, db)
 
-    # Record last sync time
+    # Record last sync time and clear error status
     now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     r = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
     await r.set(_REDIS_KEY_LAST_SYNC, now_str)
+    await r.set(_REDIS_KEY_CONN_STATUS, "ok")
     await r.aclose()
 
     cfg = await _read_airtrail_config()
@@ -246,6 +272,7 @@ async def airtrail_disconnect(request: Request):
     await r.delete(
         _REDIS_KEY_URL, _REDIS_KEY_API_KEY,
         _REDIS_KEY_SCHEDULE, _REDIS_KEY_LAST_SYNC,
+        _REDIS_KEY_CONN_STATUS,
     )
     await r.aclose()
 

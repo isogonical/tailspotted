@@ -333,9 +333,11 @@ async def sync_airtrail_periodic(ctx: dict) -> None:
 
         now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
         await redis.set("ts:airtrail_last_sync", now_str)
+        await redis.set("ts:airtrail_conn_status", "ok")
 
     except Exception as e:
         logger.error(f"AirTrail auto-sync failed: {e}")
+        await redis.set("ts:airtrail_conn_status", "error")
 
 
 async def check_pending_jobs(ctx: dict) -> None:
