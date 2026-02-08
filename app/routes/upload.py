@@ -26,13 +26,13 @@ _REDIS_KEY_SCHEDULE = "ts:airtrail_schedule"
 _REDIS_KEY_LAST_SYNC = "ts:airtrail_last_sync"
 
 
-@router.get("/upload", response_class=HTMLResponse)
-async def upload_page(request: Request):
+@router.get("/import", response_class=HTMLResponse)
+async def import_page(request: Request):
     return templates.TemplateResponse("upload.html", {"request": request})
 
 
-@router.post("/upload", response_class=HTMLResponse)
-async def upload_csv(request: Request, file: UploadFile, db: AsyncSession = Depends(get_db)):
+@router.post("/import", response_class=HTMLResponse)
+async def import_file(request: Request, file: UploadFile, db: AsyncSession = Depends(get_db)):
     content = await file.read()
 
     try:
