@@ -1770,6 +1770,22 @@ h3 {
     box-shadow: 0 0 8px var(--green-glow);
 }
 
+.sync-status-dot.testing {
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--glow);
+    animation: pulse-dot 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--glow); }
+    50% { opacity: 0.4; box-shadow: 0 0 16px var(--glow); }
+}
+
+.sync-status-dot.disconnected {
+    background: #e53935;
+    box-shadow: 0 0 8px rgba(229, 57, 53, 0.3);
+}
+
 .sync-status-text {
     font-size: 0.9em;
     color: var(--text);

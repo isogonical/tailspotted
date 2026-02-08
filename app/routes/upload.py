@@ -89,11 +89,35 @@ def _airtrail_ctx(request: Request, cfg: dict, **extra) -> dict:
 
 @router.get("/airtrail/status", response_class=HTMLResponse)
 async def airtrail_status(request: Request):
-    """Return HTMX partial showing current AirTrail connection state."""
+    """Return HTMX partial — if configured, show testing state that auto-fires check."""
     cfg = await _read_airtrail_config()
+    if cfg["url"] and cfg["api_key"]:
+        return templates.TemplateResponse(
+            "partials/airtrail_status.html",
+            _airtrail_ctx(request, cfg, testing=True),
+        )
     return templates.TemplateResponse(
         "partials/airtrail_status.html",
         _airtrail_ctx(request, cfg),
+    )
+
+
+@router.get("/airtrail/check", response_class=HTMLResponse)
+async def airtrail_check(request: Request):
+    """Test AirTrail connection and return the configured state with result."""
+    from app.services.airtrail_sync import test_airtrail_connection
+
+    cfg = await _read_airtrail_config()
+    if not cfg["url"] or not cfg["api_key"]:
+        return templates.TemplateResponse(
+            "partials/airtrail_status.html",
+            _airtrail_ctx(request, cfg),
+        )
+
+    ok, message = await test_airtrail_connection(cfg["url"], cfg["api_key"])
+    return templates.TemplateResponse(
+        "partials/airtrail_status.html",
+        _airtrail_ctx(request, cfg, connection_ok=ok, connection_message=message),
     )
 
 
@@ -142,7 +166,7 @@ async def airtrail_save(
     cfg = await _read_airtrail_config()
     return templates.TemplateResponse(
         "partials/airtrail_status.html",
-        _airtrail_ctx(request, cfg, connect_message=message),
+        _airtrail_ctx(request, cfg, connection_ok=True, connect_message=message),
     )
 
 
@@ -165,7 +189,7 @@ async def airtrail_sync(request: Request, db: AsyncSession = Depends(get_db)):
         logger.error(f"AirTrail sync error: {e}")
         return templates.TemplateResponse(
             "partials/airtrail_status.html",
-            _airtrail_ctx(request, cfg, sync_error=f"Sync failed: {e}"),
+            _airtrail_ctx(request, cfg, connection_ok=False, connection_message=f"Sync failed: {e}"),
         )
 
     stats = await import_flights(flights, batch_id, db)
@@ -179,7 +203,7 @@ async def airtrail_sync(request: Request, db: AsyncSession = Depends(get_db)):
     cfg = await _read_airtrail_config()
     return templates.TemplateResponse(
         "partials/airtrail_status.html",
-        _airtrail_ctx(request, cfg, sync_result={
+        _airtrail_ctx(request, cfg, connection_ok=True, sync_result={
             **stats,
             "format_name": format_info.name,
             "format_beta": format_info.beta,
@@ -211,7 +235,7 @@ async def airtrail_schedule(request: Request, schedule: str = Form(...)):
     cfg = await _read_airtrail_config()
     return templates.TemplateResponse(
         "partials/airtrail_status.html",
-        _airtrail_ctx(request, cfg),
+        _airtrail_ctx(request, cfg, connection_ok=True),
     )
 
 

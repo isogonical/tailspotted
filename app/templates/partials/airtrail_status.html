@@ -41,23 +41,41 @@
     </form>
 </div>
 
+{% elif testing %}
+{# ===== Testing connection state ===== #}
+<div class="sync-connected"
+     hx-get="/airtrail/check"
+     hx-target="#airtrail-section"
+     hx-swap="innerHTML"
+     hx-trigger="load">
+    <div class="sync-status-row">
+        <span class="sync-status-dot testing"></span>
+        <span class="sync-status-text">Testing connection to <code>{{ airtrail_url }}</code>...</span>
+    </div>
+</div>
+
 {% elif configured %}
-{# ===== Connected state ===== #}
+{# ===== Connected / disconnected state ===== #}
 <div class="sync-connected">
     <div class="sync-status-row">
+        {% if connection_ok %}
         <span class="sync-status-dot connected"></span>
         <span class="sync-status-text">Connected to <code>{{ airtrail_url }}</code></span>
+        {% else %}
+        <span class="sync-status-dot disconnected"></span>
+        <span class="sync-status-text">Cannot reach <code>{{ airtrail_url }}</code></span>
+        {% endif %}
     </div>
 
-    {% if connect_message %}
+    {% if connection_ok and connect_message %}
     <div class="alert alert-success" style="margin-top: 12px;">
         {{ connect_message }}. Press <strong>Sync Now</strong> to import your flights.
     </div>
     {% endif %}
 
-    {% if sync_error %}
+    {% if connection_message and not connection_ok %}
     <div class="alert alert-error" style="margin-top: 12px;">
-        {{ sync_error }}
+        {{ connection_message }}
     </div>
     {% endif %}
 
