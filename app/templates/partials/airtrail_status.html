@@ -1,0 +1,173 @@
+{% if editing %}
+{# ===== Edit connection state ===== #}
+<div class="sync-editing">
+    {% if error %}
+    <div class="alert alert-error" style="margin-bottom: 16px;">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <p class="sync-description">Update your AirTrail connection settings.</p>
+
+    <form class="sync-form"
+          hx-post="/airtrail/save"
+          hx-target="#airtrail-section"
+          hx-swap="innerHTML">
+        <div class="sync-form-row">
+            <label for="airtrail-url">AirTrail URL</label>
+            <input type="url" id="airtrail-url" name="url"
+                   value="{{ airtrail_url }}"
+                   placeholder="http://airtrail:3000"
+                   required>
+        </div>
+        <div class="sync-form-row">
+            <label for="airtrail-key">API Key</label>
+            <input type="password" id="airtrail-key" name="api_key"
+                   placeholder="Enter new API key"
+                   required>
+        </div>
+        <div class="sync-form-actions">
+            <button type="submit" class="btn btn-primary">
+                <span class="htmx-indicator">Testing...</span>
+                <span>Save &amp; Test</span>
+            </button>
+            <button type="button" class="btn btn-small"
+                    hx-get="/airtrail/status"
+                    hx-target="#airtrail-section"
+                    hx-swap="innerHTML">
+                Cancel
+            </button>
+        </div>
+    </form>
+</div>
+
+{% elif configured %}
+{# ===== Connected state ===== #}
+<div class="sync-connected">
+    <div class="sync-status-row">
+        <span class="sync-status-dot connected"></span>
+        <span class="sync-status-text">Connected to <code>{{ airtrail_url }}</code></span>
+    </div>
+
+    {% if connect_message %}
+    <div class="alert alert-success" style="margin-top: 12px;">
+        {{ connect_message }}
+    </div>
+    {% endif %}
+
+    {% if sync_error %}
+    <div class="alert alert-error" style="margin-top: 12px;">
+        {{ sync_error }}
+    </div>
+    {% endif %}
+
+    {% if sync_result %}
+    <div class="alert alert-success" style="margin-top: 12px;">
+        <strong>Sync complete!</strong>
+        <span class="format-detected">
+            Format: <strong>{{ sync_result.format_name }}</strong>
+            {% if sync_result.format_beta %}<span class="badge-beta">beta</span>{% endif %}
+        </span>
+        {% if sync_result.format_beta %}
+        <div class="beta-warning">
+            This format is in beta. Please verify imported flights for accuracy.
+        </div>
+        {% endif %}
+        <ul>
+            <li>{{ sync_result.flights_imported }} new flight{{ 's' if sync_result.flights_imported != 1 else '' }} imported</li>
+            {% if sync_result.flights_skipped %}
+            <li>{{ sync_result.flights_skipped }} duplicate{{ 's' if sync_result.flights_skipped != 1 else '' }} skipped</li>
+            {% endif %}
+            {% if sync_result.registrations %}
+            <li>{{ sync_result.registrations }} new registration{{ 's' if sync_result.registrations != 1 else '' }}</li>
+            {% endif %}
+            {% if sync_result.jobs_created %}
+            <li>{{ sync_result.jobs_created }} new scan job{{ 's' if sync_result.jobs_created != 1 else '' }} queued</li>
+            {% endif %}
+        </ul>
+        <a href="/flights" class="btn btn-secondary" style="margin-top: 8px;">View Flights</a>
+    </div>
+    {% endif %}
+
+    <div class="sync-settings">
+        <div class="sync-setting-row">
+            <label>Auto-sync</label>
+            <select class="queue-select"
+                    hx-post="/airtrail/schedule"
+                    hx-target="#airtrail-section"
+                    hx-swap="innerHTML"
+                    name="schedule">
+                <option value="manual" {{ 'selected' if sync_schedule == 'manual' else '' }}>Manual only</option>
+                <option value="1h" {{ 'selected' if sync_schedule == '1h' else '' }}>Every hour</option>
+                <option value="6h" {{ 'selected' if sync_schedule == '6h' else '' }}>Every 6 hours</option>
+                <option value="12h" {{ 'selected' if sync_schedule == '12h' else '' }}>Every 12 hours</option>
+                <option value="24h" {{ 'selected' if sync_schedule == '24h' else '' }}>Daily</option>
+            </select>
+        </div>
+        {% if last_sync %}
+        <div class="sync-last-run">
+            Last sync: {{ last_sync }}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="sync-actions">
+        <button class="btn btn-primary"
+                hx-post="/airtrail/sync"
+                hx-target="#airtrail-section"
+                hx-swap="innerHTML">
+            <span class="htmx-indicator">Syncing...</span>
+            <span>Sync Now</span>
+        </button>
+        <button class="btn btn-small"
+                hx-get="/airtrail/edit"
+                hx-target="#airtrail-section"
+                hx-swap="innerHTML"
+                style="margin-left: 8px;">
+            Edit
+        </button>
+        <button class="btn btn-small btn-danger"
+                hx-post="/airtrail/disconnect"
+                hx-target="#airtrail-section"
+                hx-swap="innerHTML"
+                hx-confirm="Disconnect from AirTrail? Your imported flights will be kept."
+                style="margin-left: 4px;">
+            Disconnect
+        </button>
+    </div>
+</div>
+
+{% else %}
+{# ===== Unconfigured state ===== #}
+<div class="sync-unconfigured">
+    {% if error %}
+    <div class="alert alert-error" style="margin-bottom: 16px;">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <p class="sync-description">Connect to your AirTrail instance to sync flights directly.</p>
+
+    <form class="sync-form"
+          hx-post="/airtrail/save"
+          hx-target="#airtrail-section"
+          hx-swap="innerHTML">
+        <div class="sync-form-row">
+            <label for="airtrail-url">AirTrail URL</label>
+            <input type="url" id="airtrail-url" name="url"
+                   placeholder="http://airtrail:3000"
+                   required>
+        </div>
+        <div class="sync-form-row">
+            <label for="airtrail-key">API Key</label>
+            <input type="password" id="airtrail-key" name="api_key"
+                   placeholder="Bearer token"
+                   required>
+        </div>
+        <button type="submit" class="btn btn-primary">
+            <span class="htmx-indicator">Connecting...</span>
+            <span>Connect</span>
+        </button>
+    </form>
+</div>
+{% endif %}

@@ -17,5 +17,4 @@ htmlcov/
 .DS_Store
 *.db
 *.sqlite3
-
 CLAUDE.md

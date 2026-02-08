@@ -5,6 +5,15 @@
 {% else %}
 <div class="alert alert-success">
     <strong>Import complete!</strong>
+    <span class="format-detected">
+        Detected format: <strong>{{ format_name }}</strong>
+        {% if format_beta %}<span class="badge-beta">beta</span>{% endif %}
+    </span>
+    {% if format_beta %}
+    <div class="beta-warning">
+        This format is in beta. Please verify imported flights for accuracy.
+    </div>
+    {% endif %}
     <ul>
         <li>{{ flights_imported }} new flight{{ 's' if flights_imported != 1 else '' }} imported</li>
         {% if flights_skipped %}

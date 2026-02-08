@@ -1,53 +1,89 @@
 {% extends "base.html" %}
-{% block title %}Upload — tailspotted{% endblock %}
+{% block title %}Import — tailspotted{% endblock %}
 {% block content %}
 <div class="page-header">
-    <h1>Upload</h1>
-    <p class="page-subtitle">Import your CSV export from <a href="https://my.flightradar24.com" target="_blank">my.flightradar24.com</a>.</p>
+    <h1>Import</h1>
+    <p class="page-subtitle">Import your flight log from any supported format.</p>
 </div>
 
-<form hx-post="/upload" hx-target="#upload-result" hx-swap="innerHTML" hx-encoding="multipart/form-data" class="upload-form">
-    <label class="upload-zone" id="drop-zone">
-        <div class="upload-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.4;">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="17 8 12 3 7 8"></polyline>
-                <line x1="12" y1="3" x2="12" y2="15"></line>
-            </svg>
-        </div>
-        <p id="file-label">Drop your CSV file here, or click to browse</p>
-        <p class="upload-hint">FlightRadar24 export format (.csv)</p>
-        <input type="file" name="file" accept=".csv" required id="csv-file">
-    </label>
-    <div style="margin-top: 16px; text-align: center;">
-        <button type="submit" class="btn btn-primary" style="padding: 12px 32px;">
-            <span class="htmx-indicator">Importing...</span>
-            <span>Import Flights</span>
-        </button>
+<div class="import-tabs">
+    <button class="import-tab active" data-tab="upload">File Upload</button>
+    <button class="import-tab" data-tab="sync">AirTrail Sync <span class="badge-beta" style="margin-left: 4px;">beta</span></button>
+    <button class="import-tab import-tab-danger" data-tab="delete">Delete Data</button>
+</div>
+
+<div class="import-tab-panels">
+    {# ===== File Upload tab ===== #}
+    <div class="import-tab-panel active" id="tab-upload">
+        <form hx-post="/upload" hx-target="#upload-result" hx-swap="innerHTML" hx-encoding="multipart/form-data" class="upload-form">
+            <label class="upload-zone" id="drop-zone">
+                <div class="upload-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.4;">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                </div>
+                <p id="file-label">Drop your file here, or click to browse</p>
+                <p class="upload-hint">myFlightradar24 (.csv) &middot; OpenFlights (.csv) <span class="badge-beta-inline">beta</span> &middot; JetLovers (.csv) <span class="badge-beta-inline">beta</span> &middot; AirTrail (.json) <span class="badge-beta-inline">beta</span></p>
+                <input type="file" name="file" accept=".csv,.json" required id="csv-file">
+            </label>
+            <div style="margin-top: 16px; text-align: center;">
+                <button type="submit" class="btn btn-primary" style="padding: 12px 32px;">
+                    <span class="htmx-indicator">Importing...</span>
+                    <span>Import Flights</span>
+                </button>
+            </div>
+        </form>
+        <div id="upload-result"></div>
     </div>
-</form>
 
-<div id="upload-result"></div>
+    {# ===== AirTrail Sync tab ===== #}
+    <div class="import-tab-panel" id="tab-sync">
+        <div id="airtrail-section"
+             hx-get="/airtrail/status"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <p class="sync-description">Loading...</p>
+        </div>
+    </div>
 
-<div class="danger-zone">
-    <h3>Danger Zone</h3>
-    <p>Permanently delete all flights, photos, matches, and scan jobs. This cannot be undone.</p>
-    <button class="btn btn-danger"
-            hx-post="/reset"
-            hx-target="#reset-result"
-            hx-swap="innerHTML"
-            hx-confirm="Are you sure? This will permanently delete ALL flights, photos, and scrape data.">
-        <span class="htmx-indicator">Deleting...</span>
-        <span>Delete All Data</span>
-    </button>
-    <div id="reset-result"></div>
+    {# ===== Delete Data tab ===== #}
+    <div class="import-tab-panel" id="tab-delete">
+        <div class="danger-zone" style="margin-top: 0;">
+            <h3>Danger Zone</h3>
+            <p>Permanently delete all flights, photos, matches, and scan jobs. This cannot be undone.</p>
+            <button class="btn btn-danger"
+                    hx-post="/reset"
+                    hx-target="#reset-result"
+                    hx-swap="innerHTML"
+                    hx-confirm="Are you sure? This will permanently delete ALL flights, photos, and scrape data.">
+                <span class="htmx-indicator">Deleting...</span>
+                <span>Delete All Data</span>
+            </button>
+            <div id="reset-result"></div>
+        </div>
+    </div>
 </div>
 
 <script>
 (function() {
-    const zone = document.getElementById('drop-zone');
-    const input = document.getElementById('csv-file');
-    const label = document.getElementById('file-label');
+    // Tab switching
+    var tabs = document.querySelectorAll('.import-tab');
+    var panels = document.querySelectorAll('.import-tab-panel');
+    tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            tabs.forEach(function(t) { t.classList.remove('active'); });
+            panels.forEach(function(p) { p.classList.remove('active'); });
+            tab.classList.add('active');
+            document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+        });
+    });
+
+    // Drag-and-drop for file upload
+    var zone = document.getElementById('drop-zone');
+    var input = document.getElementById('csv-file');
+    var label = document.getElementById('file-label');
 
     input.addEventListener('change', function() {
         if (input.files.length > 0) {

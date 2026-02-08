@@ -284,6 +284,60 @@ async def process_scrape_job(ctx: dict, job_id: int) -> dict:
             return {"error": str(e)}
 
 
+_SCHEDULE_HOURS = {"1h": 1, "6h": 6, "12h": 12, "24h": 24}
+
+
+async def sync_airtrail_periodic(ctx: dict) -> None:
+    """Periodic AirTrail sync — runs every hour, checks if it's time to sync."""
+    redis = ctx.get("redis")
+    if not redis:
+        return
+
+    url = await redis.get("ts:airtrail_url")
+    api_key = await redis.get("ts:airtrail_api_key")
+    schedule = await redis.get("ts:airtrail_schedule") or "manual"
+
+    if not url or not api_key or schedule == "manual":
+        return
+
+    interval_hours = _SCHEDULE_HOURS.get(schedule)
+    if not interval_hours:
+        return
+
+    last_sync_str = await redis.get("ts:airtrail_last_sync")
+    if last_sync_str:
+        try:
+            last_sync = datetime.strptime(last_sync_str, "%Y-%m-%d %H:%M UTC")
+            last_sync = last_sync.replace(tzinfo=timezone.utc)
+            if datetime.now(timezone.utc) - last_sync < timedelta(hours=interval_hours):
+                return  # Not time yet
+        except (ValueError, TypeError):
+            pass  # Can't parse — sync now
+
+    logger.info(f"Auto-syncing from AirTrail (schedule={schedule})")
+
+    try:
+        from app.services.airtrail_sync import sync_airtrail_flights
+        from app.services.flight_importer import import_flights
+
+        flights_data, batch_id, _format_info = await sync_airtrail_flights(url, api_key)
+
+        async with async_session() as db:
+            stats = await import_flights(flights_data, batch_id, db)
+
+        logger.info(
+            f"AirTrail auto-sync: {stats['flights_imported']} new, "
+            f"{stats['flights_skipped']} skipped, "
+            f"{stats['jobs_created']} scrape jobs created"
+        )
+
+        now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        await redis.set("ts:airtrail_last_sync", now_str)
+
+    except Exception as e:
+        logger.error(f"AirTrail auto-sync failed: {e}")
+
+
 async def check_pending_jobs(ctx: dict) -> None:
     """Fallback sweeper: pick up stalled jobs every 5 minutes.
 
@@ -453,7 +507,10 @@ async def shutdown(ctx: dict) -> None:
 
 class WorkerSettings:
     functions = [process_scrape_job]
-    cron_jobs = [cron(check_pending_jobs, minute={0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55}, second={0})]  # every 5 min fallback
+    cron_jobs = [
+        cron(check_pending_jobs, minute={0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55}, second={0}),  # every 5 min fallback
+        cron(sync_airtrail_periodic, minute={0}, second={30}),  # top of every hour
+    ]
     on_startup = startup
     on_shutdown = shutdown
     redis_settings = RedisSettings.from_dsn(settings.REDIS_URL)

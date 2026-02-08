@@ -16,7 +16,7 @@
             <a href="/"><img src="/static/img/logo.svg" alt="" class="nav-logo">tailspotted</a>
         </div>
         <div class="nav-links">
-            <a href="/upload" {% if request.url.path == '/upload' %}class="active"{% endif %}>Upload</a>
+            <a href="/upload" {% if request.url.path == '/upload' %}class="active"{% endif %}>Import</a>
             <a href="/flights" {% if request.url.path.startswith('/flights') %}class="active"{% endif %}>Flights</a>
             <a href="/review" {% if request.url.path.startswith('/review') %}class="active"{% endif %}>
                 Review
