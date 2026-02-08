@@ -6,7 +6,7 @@ from arq.connections import RedisSettings
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -306,3 +306,30 @@ async def rescan_flight(
         logger.warning(f"Failed to enqueue rescan: {e}")
 
     return HTMLResponse('<span class="badge badge-running">scanning...</span>')
+
+
+@router.delete("/flights/{flight_id}", response_class=HTMLResponse)
+async def delete_flight(
+    request: Request, flight_id: int, db: AsyncSession = Depends(get_db)
+):
+    """Delete a single flight and its associated matches/decisions."""
+    flight_q = await db.execute(select(Flight).where(Flight.id == flight_id))
+    flight = flight_q.scalar_one_or_none()
+    if not flight:
+        return HTMLResponse("Flight not found", status_code=404)
+
+    # Delete in FK-safe order for this flight's matches
+    await db.execute(
+        delete(UserDecision).where(
+            UserDecision.match_id.in_(
+                select(FlightPhotoMatch.id).where(FlightPhotoMatch.flight_id == flight_id)
+            )
+        )
+    )
+    await db.execute(
+        delete(FlightPhotoMatch).where(FlightPhotoMatch.flight_id == flight_id)
+    )
+    await db.execute(delete(Flight).where(Flight.id == flight_id))
+    await db.commit()
+
+    return HTMLResponse(status_code=200, headers={"HX-Redirect": "/flights"})
