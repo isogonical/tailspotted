@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-166.94 -266.53 600 800" width="600px" height="800px">
+  <defs>
+    <filter id="windowGlow">
+      <feGaussianBlur stdDeviation="20" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <radialGradient id="glassShine" cx="45%" cy="35%">
+      <stop offset="0" style="stop-color:#3d6a88;stop-opacity:0.5"/>
+      <stop offset="1" style="stop-color:#1a3a52;stop-opacity:0.2"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Window glow -->
+  <rect x="-166.94" y="-266.53" width="600" height="800" rx="120" fill="none" stroke="#5ba8ff" stroke-width="3" opacity="0.4" filter="url(#windowGlow)"/>
+
+  <!-- Outer frame -->
+  <rect x="-158.94" y="-258.53" width="584" height="784" rx="115" fill="none" stroke="#5ba8ff" stroke-width="16"/>
+
+  <!-- Inner frame -->
+  <rect x="-133.94" y="-233.53" width="534" height="734" rx="100" fill="none" stroke="#4a90d9" stroke-width="10"/>
+
+  <!-- Glass pane -->
+  <rect x="-113.94" y="-213.53" width="494" height="694" rx="85" fill="#234a68" opacity="0.7"/>
+  <rect x="-113.94" y="-213.53" width="494" height="694" rx="85" fill="url(#glassShine)"/>
+
+  <!-- Green viewfinder brackets -->
+  <g stroke="#4ade80" stroke-width="7" fill="none" stroke-linecap="round" opacity="0.85" transform="translate(-378.942,-378.529)">
+    <polyline points="360,290 300,290 300,350"/>
+    <polyline points="664,290 724,290 724,350"/>
+    <polyline points="360,734 300,734 300,674"/>
+    <polyline points="664,734 724,734 724,674"/>
+  </g>
+
+  <!-- Crosshair tick marks -->
+  <g stroke="#4ade80" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5">
+    <line x1="133" y1="-195" x2="133" y2="-165"/>
+    <line x1="133" y1="432" x2="133" y2="462"/>
+    <line x1="-98" y1="133" x2="-68" y2="133"/>
+    <line x1="334" y1="133" x2="364" y2="133"/>
+  </g>
+
+  <!-- Tail silhouette -->
+  <path d="M -67.964 -27.341 L 68.078 258.813 L 315.357 258.025 C 343.432 260.794 349.021 234.468 326.522 216.487 L 74.423 -26.74 L -67.964 -27.341 Z" fill="#fff" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>
+</svg>
