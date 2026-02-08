@@ -6,7 +6,6 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://flight:flight@postgres:5432/flightphotos
       REDIS_URL: redis://redis:6379/0
-      SECRET_KEY: change-me-in-production
     depends_on:
       postgres:
         condition: service_healthy
