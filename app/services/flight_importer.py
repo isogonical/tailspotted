@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 import redis.asyncio as aioredis
 from arq import create_pool
 from arq.connections import RedisSettings
-from sqlalchemy import and_, select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
@@ -28,17 +28,35 @@ async def import_flights(
     new_flights = []
     skipped = 0
     for flight in flights:
-        conditions = [
-            Flight.date == flight.date,
-            Flight.departure_airport_iata == flight.departure_airport_iata,
-            Flight.arrival_airport_iata == flight.arrival_airport_iata,
-        ]
+        # Dedup on date + route + flight number + registration.
+        # Match airports by either IATA or ICAO so imports from different
+        # sources (e.g. FR24 vs AirTrail) find each other.
+        dep_iata = flight.departure_airport_iata
+        dep_icao = flight.departure_airport_icao
+        arr_iata = flight.arrival_airport_iata
+        arr_icao = flight.arrival_airport_icao
+
+        dep_conds = []
+        if dep_iata:
+            dep_conds.append(Flight.departure_airport_iata == dep_iata)
+        if dep_icao:
+            dep_conds.append(Flight.departure_airport_icao == dep_icao)
+
+        arr_conds = []
+        if arr_iata:
+            arr_conds.append(Flight.arrival_airport_iata == arr_iata)
+        if arr_icao:
+            arr_conds.append(Flight.arrival_airport_icao == arr_icao)
+
+        conditions = [Flight.date == flight.date]
+        if dep_conds:
+            conditions.append(or_(*dep_conds))
+        if arr_conds:
+            conditions.append(or_(*arr_conds))
         if flight.flight_number:
             conditions.append(Flight.flight_number == flight.flight_number)
-        else:
-            conditions.append(Flight.flight_number.is_(None))
-        if flight.dep_time:
-            conditions.append(Flight.dep_time == flight.dep_time)
+        if flight.registration:
+            conditions.append(Flight.registration == flight.registration)
 
         existing = await db.execute(
             select(Flight.id).where(and_(*conditions)).limit(1)
