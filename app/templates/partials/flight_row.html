@@ -1,0 +1,40 @@
+{% set st = flight_statuses[flight.id] if flight_statuses is defined else None %}
+<tr class="flight-row" onclick="window.location='/flights/{{ flight.id }}'">
+    <td>{{ flight.date }}</td>
+    <td>{{ flight.flight_number or '' }}</td>
+    <td class="route">
+        <span class="airport">{{ flight.departure_airport_iata or '???' }}</span>
+        <span class="arrow">&rarr;</span>
+        <span class="airport">{{ flight.arrival_airport_iata or '???' }}</span>
+    </td>
+    <td>{{ flight.dep_time.strftime('%H:%M') if flight.dep_time else '' }}</td>
+    <td>{{ flight.arr_time.strftime('%H:%M') if flight.arr_time else '' }}{% if flight.arrival_date and flight.arrival_date != flight.date %} <small>(+{{ (flight.arrival_date - flight.date).days }}d)</small>{% endif %}</td>
+    <td>{{ flight.aircraft or '' }}</td>
+    <td>{% if flight.registration %}<span class="reg-pill">{{ flight.registration }}</span>{% endif %}</td>
+    <td {% if st and st.is_active %}hx-get="/flights/{{ flight.id }}/scrape-status" hx-trigger="every 10s" hx-swap="innerHTML"{% endif %}>
+        {% if st and st.type == 'status' %}
+            {% if st.match_count > 0 %}
+            <span class="photo-status-group">
+                <a href="/flights/{{ flight.id }}" class="badge badge-photos">{{ st.match_count }} match{{ 'es' if st.match_count != 1 else '' }}</a>
+                {% if st.any_running %}
+                <span class="status-dot status-dot-running" title="Scanning..."></span>
+                {% elif st.any_pending %}
+                <span class="status-dot status-dot-pending" title="Queued"></span>
+                {% endif %}
+            </span>
+            {% elif st.any_running %}
+            <span class="badge badge-running">scanning...</span>
+            {% elif st.any_pending %}
+            <span class="badge badge-pending">queued</span>
+            {% elif st.any_blocked and not st.any_completed %}
+            <span class="badge badge-blocked" title="{{ st.blocked_message }}">blocked</span>
+            {% elif st.any_failed and not st.any_completed %}
+            <span class="badge badge-failed" title="{{ st.error_message }}">error</span>
+            {% elif st.all_done %}
+            <span class="badge badge-checked" title="Last checked {{ st.last_scraped_relative }}">checked {{ st.last_scraped_relative }}</span>
+            {% endif %}
+        {% elif st and st.type == 'no_reg' %}
+            <span class="badge badge-no-reg">no reg</span>
+        {% endif %}
+    </td>
+</tr>

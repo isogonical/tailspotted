@@ -1,0 +1,148 @@
+{% if match %}
+<div class="review-card">
+    <!-- Hero photo with gradient overlay -->
+    <div class="review-hero">
+        {% if photo and (photo.full_image_url or photo.thumbnail_url) %}
+        <a href="{{ photo.source_url }}" target="_blank" class="review-hero-link">
+            <img src="{{ photo.full_image_url or photo.thumbnail_url }}" alt="Photo of {{ photo.registration }}" loading="lazy" referrerpolicy="no-referrer">
+        </a>
+        {% else %}
+        <div class="no-thumbnail-large">
+            <p>No thumbnail available</p>
+            {% if photo %}<a href="{{ photo.source_url }}" target="_blank">View on {{ photo.source }}</a>{% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Gradient overlay with key info -->
+        <div class="review-overlay">
+            <div class="review-overlay-left">
+                {% if flight %}
+                <div class="review-route">
+                    {% set dep = flight.departure_airport_iata or '???' %}
+                    {% set arr = flight.arrival_airport_iata or '???' %}
+                    {% set photo_apt = photo.airport_code|to_iata if photo and photo.airport_code else '' %}
+                    <span class="{% if photo_apt == dep %}route-match{% endif %}">{{ dep }}</span>
+                    <svg width="20" height="12" viewBox="0 0 20 12" fill="none" style="margin: 0 4px; opacity: 0.5;"><path d="M1 6h18m0 0l-4-4m4 4l-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span class="{% if photo_apt == arr %}route-match{% endif %}">{{ arr }}</span>
+                </div>
+                <div class="review-flight-meta">
+                    {{ flight.flight_number or '' }} &middot; {{ flight.date }} &middot; {{ flight.aircraft or '' }} <code>{{ flight.registration or '' }}</code>
+                </div>
+                {% endif %}
+            </div>
+            <div class="review-overlay-right">
+                {% if match.match_reasons.get('date') == 'exact' %}
+                <span class="confidence-tag likely">Likely Match</span>
+                {% else %}
+                <span class="confidence-tag possible">Possible Match</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Photo info line -->
+    <div class="review-meta-bar">
+        <div class="review-meta-line">
+            <span class="review-meta-left">
+                {% if match.match_reasons.get('date') == 'exact' %}
+                <span class="meta-confidence likely">Same day as flight</span>
+                {% else %}
+                <span class="meta-confidence possible">Within a day of flight</span>
+                {% endif %}
+                <span class="meta-dates">
+                    photo {{ photo.photo_date.strftime('%b %-d') if photo and photo.photo_date else '?' }}
+                    / flight {{ flight.date.strftime('%b %-d') if flight and flight.date else '?' }}{% if flight and flight.arrival_date and flight.arrival_date != flight.date %}–{{ flight.arrival_date.strftime('%-d') }}{% endif %}
+                </span>
+
+                {% if photo and photo.airport_code %}
+                <span class="meta-sep">&middot;</span>
+                <span class="meta-airport">{{ photo.airport_code|to_iata }}</span>
+                {% endif %}
+
+                {% if photo and photo.photographer %}
+                <span class="meta-sep">&middot;</span>
+                <span>Photo by {{ photo.photographer }}</span>
+                {% endif %}
+
+                {% if photo %}
+                <span class="meta-sep">&middot;</span>
+                <a href="{{ photo.source_url }}" target="_blank">{{ photo.source|source_display }}</a>
+                {% endif %}
+            </span>
+
+            {% if flight and flight.seat_number %}
+            <span class="meta-seat" title="Seat {{ flight.seat_number }}{% if flight.seat_type %} ({{ flight.seat_type }}){% endif %}">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18v3h3"/><path d="M20 18v3h-3"/><path d="M12 2v8"/><path d="M4 10h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2z"/></svg>
+                {{ flight.seat_number }}{% if flight.seat_type %} <span class="meta-seat-type">{{ flight.seat_type }}</span>{% endif %}
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Action area -->
+    <div class="review-actions-bar">
+        <div class="review-actions-row">
+            <button class="btn btn-approve"
+                    hx-post="/review/{{ match.id }}/approved?index={{ index }}"
+                    hx-target="#review-card"
+                    hx-swap="innerHTML"
+                    hx-include="#review-comment">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Approve
+            </button>
+            <button class="btn btn-reject"
+                    hx-post="/review/{{ match.id }}/rejected?index={{ index }}"
+                    hx-target="#review-card"
+                    hx-swap="innerHTML"
+                    hx-include="#review-comment">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                Reject
+            </button>
+        </div>
+
+        <textarea name="comment" id="review-comment" class="comment-input"
+                  placeholder="Add a note..." rows="1"></textarea>
+    </div>
+
+    <!-- Navigation bar -->
+    <div class="review-nav-bar">
+        {% if index > 0 %}
+        <button class="review-nav-btn"
+                hx-get="/review/card?index={{ index - 1 }}"
+                hx-target="#review-card"
+                hx-swap="innerHTML">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            Previous
+        </button>
+        {% else %}
+        <button class="review-nav-btn" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            Previous
+        </button>
+        {% endif %}
+
+        <span class="review-position">{{ index + 1 }} of {{ pending_count }}</span>
+
+        {% if index < pending_count - 1 %}
+        <button class="review-nav-btn"
+                hx-get="/review/card?index={{ index + 1 }}"
+                hx-target="#review-card"
+                hx-swap="innerHTML">
+            Next
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+        {% else %}
+        <button class="review-nav-btn" disabled>
+            Next
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+        {% endif %}
+    </div>
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">&#10003;</div>
+    <p>All caught up! No more photos to review.</p>
+    <a href="/library" class="btn btn-secondary">View Library</a>
+</div>
+{% endif %}

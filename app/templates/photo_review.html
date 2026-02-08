@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Review Photos — Tailspotted{% endblock %}
+{% block content %}
+<div class="review-container">
+    <h1>Review <span class="count" id="pending-count" hx-get="/review/pending-count" hx-trigger="reviewCountChanged from:body" hx-swap="innerHTML">({{ pending_count }} pending)</span></h1>
+
+    <div id="review-card">
+    {% if match %}
+    {% include "partials/photo_card.html" %}
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">&#128247;</div>
+        <p>No photos to review right now.</p>
+        <p>Photos will appear here after scanning completes.</p>
+        <a href="/flights" class="btn btn-secondary">View Flights</a>
+    </div>
+    {% endif %}
+    </div>
+</div>
+<script>
+document.addEventListener('keydown', function(e) {
+    if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+    var card = document.getElementById('review-card');
+    if (!card) return;
+    var allBtns = card.querySelectorAll('.review-nav-btn');
+    var prev = allBtns[0], next = allBtns[1];
+    if (e.key === 'ArrowLeft' && prev && !prev.disabled) prev.click();
+    else if (e.key === 'ArrowRight' && next && !next.disabled) next.click();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Flights — Tailspotted{% endblock %}
+{% block content %}
+<h1>Flights <span class="count">({{ total }})</span></h1>
+
+{% if flights %}
+<table class="flight-table">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Flight</th>
+            <th>Route</th>
+            <th>Dep</th>
+            <th>Arr</th>
+            <th>Aircraft</th>
+            <th>Registration</th>
+            <th>Photos</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for flight in flights %}
+        {% include "partials/flight_row.html" %}
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if total_pages > 1 %}
+<div class="pagination">
+    {% if page > 1 %}
+    <a href="/flights?page={{ page - 1 }}" class="btn btn-secondary">&larr; Previous</a>
+    {% endif %}
+    <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
+    {% if page < total_pages %}
+    <a href="/flights?page={{ page + 1 }}" class="btn btn-secondary">Next &rarr;</a>
+    {% endif %}
+</div>
+{% endif %}
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">&#9992;</div>
+    <p>No flights imported yet.</p>
+    <a href="/upload" class="btn btn-primary">Upload a CSV</a>
+</div>
+{% endif %}
+{% endblock %}

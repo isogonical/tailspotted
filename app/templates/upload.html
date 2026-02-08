@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Upload — Tailspotted{% endblock %}
+{% block content %}
+<h1>Import Flight Log</h1>
+<p style="color: var(--text-muted); margin-bottom: 24px;">Upload your CSV export from <a href="https://my.flightradar24.com" target="_blank">my.flightradar24.com</a>.</p>
+
+<form hx-post="/upload" hx-target="#upload-result" hx-swap="innerHTML" hx-encoding="multipart/form-data" class="upload-form">
+    <label class="upload-zone" id="drop-zone">
+        <div class="upload-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity: 0.4;">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+        </div>
+        <p id="file-label">Drop your CSV file here, or click to browse</p>
+        <p class="upload-hint">FlightRadar24 export format (.csv)</p>
+        <input type="file" name="file" accept=".csv" required id="csv-file">
+    </label>
+    <div style="margin-top: 16px; text-align: center;">
+        <button type="submit" class="btn btn-primary" style="padding: 12px 32px;">
+            <span class="htmx-indicator">Importing...</span>
+            <span>Import Flights</span>
+        </button>
+    </div>
+</form>
+
+<div id="upload-result"></div>
+
+<script>
+(function() {
+    const zone = document.getElementById('drop-zone');
+    const input = document.getElementById('csv-file');
+    const label = document.getElementById('file-label');
+
+    input.addEventListener('change', function() {
+        if (input.files.length > 0) {
+            label.textContent = input.files[0].name;
+        }
+    });
+
+    zone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        zone.classList.add('drag-over');
+    });
+
+    zone.addEventListener('dragleave', function() {
+        zone.classList.remove('drag-over');
+    });
+
+    zone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        zone.classList.remove('drag-over');
+        if (e.dataTransfer.files.length > 0) {
+            input.files = e.dataTransfer.files;
+            label.textContent = e.dataTransfer.files[0].name;
+        }
+    });
+})();
+</script>
+{% endblock %}

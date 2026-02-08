@@ -1,0 +1,22 @@
+{% if match_count > 0 %}
+<span class="photo-status-group">
+    <a href="/flights/{{ flight_id }}" class="badge badge-photos">{{ match_count }} match{{ 'es' if match_count != 1 else '' }}</a>
+    {% if any_running %}
+    <span class="status-dot status-dot-running" title="Scanning..."></span>
+    {% elif any_pending %}
+    <span class="status-dot status-dot-pending" title="Queued"></span>
+    {% endif %}
+</span>
+{% elif any_running %}
+<span class="badge badge-running">scanning...</span>
+{% elif any_pending %}
+<span class="badge badge-pending">queued</span>
+{% elif any_blocked and not any_completed %}
+<span class="badge badge-blocked" title="{{ blocked_message }}">blocked</span>
+{% elif any_failed and not any_completed %}
+<span class="badge badge-failed" title="{{ error_message }}">error</span>
+{% elif all_done %}
+<span class="badge badge-checked" title="Last checked {{ last_scraped }}">checked {{ last_scraped_relative }}</span>
+{% elif not scrape_jobs %}
+<span class="badge badge-no-reg">no reg</span>
+{% endif %}

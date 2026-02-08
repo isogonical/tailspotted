@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Library — Tailspotted{% endblock %}
+{% block content %}
+<h1>Library</h1>
+
+<div class="filters">
+    <a href="/library?status=approved{% if selected_year %}&year={{ selected_year }}{% endif %}"
+       class="btn btn-filter {% if selected_status == 'approved' %}active{% endif %}">Approved</a>
+    <a href="/library?status=rejected{% if selected_year %}&year={{ selected_year }}{% endif %}"
+       class="btn btn-filter {% if selected_status == 'rejected' %}active{% endif %}">Rejected</a>
+
+    {% if years %}
+    <span class="filter-divider"></span>
+    <a href="/library?status={{ selected_status }}" class="btn btn-filter {% if not selected_year %}active{% endif %}">All Years</a>
+    {% for y in years %}
+    <a href="/library?status={{ selected_status }}&year={{ y }}" class="btn btn-filter {% if selected_year == y %}active{% endif %}">{{ y }}</a>
+    {% endfor %}
+    {% endif %}
+</div>
+
+{% if items %}
+<div class="library-grid">
+    {% for item in items %}
+    <div class="library-card" id="library-card-{{ item.match.id }}">
+        <div class="card-image">
+            {% if item.photo.thumbnail_url %}
+            <a href="{{ item.photo.source_url }}" target="_blank">
+                <img src="{{ item.photo.thumbnail_url }}" alt="Photo of {{ item.photo.registration }}" loading="lazy" referrerpolicy="no-referrer">
+            </a>
+            {% else %}
+            <div class="no-thumbnail">
+                <a href="{{ item.photo.source_url }}" target="_blank">View photo</a>
+            </div>
+            {% endif %}
+            {% if item.photo.photographer %}
+            <div class="card-photographer">{{ item.photo.photographer }}</div>
+            {% endif %}
+        </div>
+        <div class="library-info">
+            <div class="library-flight">
+                <span class="reg-pill">{{ item.photo.registration }}</span>
+                {{ item.flight.departure_airport_iata }} &rarr; {{ item.flight.arrival_airport_iata }}
+                <button class="btn-requeue" onclick="document.getElementById('requeue-modal-{{ item.match.id }}').showModal()" title="Re-process">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <polyline points="1 20 1 14 7 14"></polyline>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="library-meta">
+                {{ item.flight.date }} &middot; {{ item.flight.airline or '' }}
+            </div>
+            {% if item.decision and item.decision.comment %}
+            <div class="library-comment">{{ item.decision.comment }}</div>
+            {% endif %}
+        </div>
+
+        <dialog id="requeue-modal-{{ item.match.id }}" class="requeue-dialog">
+            <div class="requeue-dialog-content">
+                <h3>Re-process this photo?</h3>
+                <p>This will remove your decision and send the photo back into the review queue.</p>
+                <div class="requeue-dialog-actions">
+                    <button class="btn btn-secondary" onclick="this.closest('dialog').close()">Cancel</button>
+                    <button class="btn btn-primary"
+                            hx-post="/library/{{ item.match.id }}/requeue"
+                            hx-target="#library-card-{{ item.match.id }}"
+                            hx-swap="outerHTML"
+                            onclick="this.closest('dialog').close()">
+                        Re-process
+                    </button>
+                </div>
+            </div>
+        </dialog>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">&#128248;</div>
+    {% if selected_status == 'approved' %}
+    <p>No approved photos yet.</p>
+    <a href="/review" class="btn btn-secondary">Review Photos</a>
+    {% else %}
+    <p>No rejected photos.</p>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

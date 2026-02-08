@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Tailspotted{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <a href="/flights">Tailspotted</a>
+        </div>
+        <div class="nav-links">
+            <a href="/upload" {% if request.url.path == '/upload' %}class="active"{% endif %}>Upload</a>
+            <a href="/flights" {% if request.url.path.startswith('/flights') %}class="active"{% endif %}>Flights</a>
+            <a href="/review" {% if request.url.path.startswith('/review') %}class="active"{% endif %}>
+                Review
+                <span id="review-badge" hx-get="/review/count" hx-trigger="load, every 30s, reviewCountChanged from:body" hx-swap="innerHTML"></span>
+            </a>
+            <a href="/library" {% if request.url.path == '/library' %}class="active"{% endif %}>Library</a>
+        </div>
+        <button class="queue-toggle"
+                hx-get="/queue/panel"
+                hx-target="#queue-panel-content"
+                hx-swap="innerHTML"
+                onclick="document.getElementById('queue-overlay').classList.add('active'); document.getElementById('queue-panel').classList.add('active');">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+    </nav>
+    <div id="queue-overlay" class="queue-overlay" onclick="this.classList.remove('active'); document.getElementById('queue-panel').classList.remove('active');"></div>
+    <div id="queue-panel" class="queue-panel">
+        <div id="queue-panel-content"></div>
+    </div>
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

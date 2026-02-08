@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}{{ flight.flight_number or 'Flight' }} — Tailspotted{% endblock %}
+{% block content %}
+<div class="flight-detail">
+    <a href="/flights" class="back-link">&larr; Back to flights</a>
+
+    <h1>
+        {{ flight.flight_number or 'Flight' }}
+        <span class="route-large">
+            {{ flight.departure_airport_iata or '???' }} &rarr; {{ flight.arrival_airport_iata or '???' }}
+        </span>
+    </h1>
+
+    <div class="detail-grid">
+        <div class="detail-card">
+            <h3>Departure</h3>
+            <p class="detail-airport">{{ flight.departure_airport_iata }}</p>
+            <p>{{ flight.departure_city or '' }}</p>
+            <p style="color: var(--text-muted); font-size: 0.9em;">{{ flight.date }} {{ flight.dep_time.strftime('%H:%M') if flight.dep_time else '' }}</p>
+        </div>
+        <div class="detail-card">
+            <h3>Arrival</h3>
+            <p class="detail-airport">{{ flight.arrival_airport_iata }}</p>
+            <p>{{ flight.arrival_city or '' }}</p>
+            <p style="color: var(--text-muted); font-size: 0.9em;">{{ flight.arrival_date or flight.date }} {{ flight.arr_time.strftime('%H:%M') if flight.arr_time else '' }}</p>
+        </div>
+        <div class="detail-card">
+            <h3>Aircraft</h3>
+            <p style="font-size: 1.1em; font-weight: 600; margin: 4px 0;">{{ flight.aircraft or 'Unknown' }}</p>
+            <p><span class="reg-pill">{{ flight.registration or 'N/A' }}</span></p>
+            <p style="color: var(--text-muted); margin-top: 4px;">{{ flight.airline or '' }}</p>
+        </div>
+        <div class="detail-card">
+            <h3>Details</h3>
+            <p>Seat: {{ flight.seat_number or 'N/A' }} ({{ flight.seat_type or '' }})</p>
+            <p>Class: {{ flight.flight_class or '' }}</p>
+            <p>Duration: {{ flight.duration.strftime('%H:%M') if flight.duration else '' }}</p>
+        </div>
+    </div>
+
+    {% if scrape_jobs %}
+    <h2>Scan Status</h2>
+    <div class="scrape-status-detail">
+        {% set status_labels = {
+            'running': 'scanning',
+            'pending': 'queued',
+            'completed': 'completed',
+            'failed': 'error',
+            'blocked': 'blocked',
+        } %}
+        {% set source_names = {
+            'airlinersnet': ('Airliners.net', 'https://www.airliners.net'),
+            'jetphotos': ('JetPhotos', 'https://www.jetphotos.com'),
+            'planespotters': ('Planespotters.net', 'https://www.planespotters.net'),
+            'airplane_pictures': ('Airplane-Pictures.net', 'https://www.airplane-pictures.net'),
+        } %}
+        {% for job in scrape_jobs %}
+        {% set name, url = source_names.get(job.source, (job.source, None)) %}
+        <div class="status-item">
+            <strong>{% if url %}<a href="{{ url }}" target="_blank" class="source-link">{{ name }}</a>{% else %}{{ name }}{% endif %}</strong>
+            {% set mc = match_counts_by_source.get(job.source, 0) %}
+            {% if mc and job.status == 'completed' %}
+            <span class="badge badge-matches">{{ mc }} match{{ 'es' if mc != 1 else '' }}</span>
+            {% else %}
+            <span class="badge badge-{{ job.status }}">{{ status_labels.get(job.status, job.status) }}</span>
+            {% endif %}
+            {% if job.last_scraped_at %}
+            <span class="scrape-last-date">Last checked {{ job.last_scraped_at.strftime('%b %-d, %Y at %H:%M') }}</span>
+            {% endif %}
+            {% if job.error_message %}
+            <div class="error-detail">{{ job.error_message }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        <div style="margin-top: 12px;">
+            <button class="btn btn-secondary btn-small"
+                    hx-post="/flights/{{ flight.id }}/rescan"
+                    hx-swap="outerHTML">
+                Re-scan {{ flight.registration }}
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if matches %}
+    <h2>Photo Matches <span class="count">({{ matches|length }})</span></h2>
+    <div class="photo-grid">
+        {% for match in matches %}
+        <div class="photo-match-card">
+            {% if match.photo and match.photo.thumbnail_url %}
+            <img src="{{ match.photo.thumbnail_url }}" alt="Photo of {{ flight.registration }}" loading="lazy" referrerpolicy="no-referrer">
+            {% else %}
+            <div class="no-thumbnail">No thumbnail</div>
+            {% endif %}
+            <div class="match-info">
+                {% if match.match_reasons and match.match_reasons.get('date') == 'exact' %}
+                <span class="confidence-tag-sm likely">Likely</span>
+                {% else %}
+                <span class="confidence-tag-sm possible">Possible</span>
+                {% endif %}
+                {% if match.photo %}
+                <span style="color: var(--text-muted); font-size: 0.85em;">{{ match.photo.source|source_display }}{% if match.photo.photo_date %} &middot; {{ match.photo.photo_date }}{% endif %}{% if match.photo.airport_code %} &middot; {{ match.photo.airport_code }}{% endif %}</span>
+                <a href="{{ match.photo.source_url }}" target="_blank" class="btn btn-small">View on site</a>
+                {% endif %}
+                {% if match.decision %}
+                <span class="badge badge-{{ match.decision.decision }}">{{ match.decision.decision }}</span>
+                {% else %}
+                <a href="/review?match_id={{ match.id }}" class="btn btn-small btn-primary">Review</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% elif flight.registration %}
+    <div class="empty-state">
+        <div class="empty-icon">&#128269;</div>
+        <p>No photo matches yet. Scanning may still be in progress.</p>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>No registration number — cannot search for photos.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

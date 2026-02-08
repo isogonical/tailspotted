@@ -1,0 +1,22 @@
+{% if error %}
+<div class="alert alert-error">
+    {{ error }}
+</div>
+{% else %}
+<div class="alert alert-success">
+    <strong>Import complete!</strong>
+    <ul>
+        <li>{{ flights_imported }} new flight{{ 's' if flights_imported != 1 else '' }} imported</li>
+        {% if flights_skipped %}
+        <li>{{ flights_skipped }} duplicate{{ 's' if flights_skipped != 1 else '' }} skipped</li>
+        {% endif %}
+        {% if registrations %}
+        <li>{{ registrations }} new registration{{ 's' if registrations != 1 else '' }}</li>
+        {% endif %}
+        {% if jobs_created %}
+        <li>{{ jobs_created }} new scan job{{ 's' if jobs_created != 1 else '' }} queued</li>
+        {% endif %}
+    </ul>
+    <a href="/flights" class="btn btn-secondary">View Flights</a>
+</div>
+{% endif %}
