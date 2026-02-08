@@ -1,63 +1,88 @@
-# Tailspotted
+# tailspotted
 
-Import your flight log from [my.flightradar24.com](https://my.flightradar24.com), then automatically find airplane spotter photos matching your flights by tail number, airport, and date.
-
-## Features
-
-- **CSV Import**: Upload your FlightRadar24 flight log export with automatic deduplication on re-upload
-- **Smart itineraries**: Correctly computes arrival dates for red-eyes, trans-oceanic, and date line crossings using timezone-aware math
-- **Multi-source scraping**: Searches four airplane photography sites for photos matching your aircraft registrations
-- **Smart matching**: Scores candidates by registration + airport + date proximity (0–100), with ICAO/IATA normalization
-- **Review queue**: Approve or reject candidate photos with keyboard navigation (arrow keys) and deep linking from flight details
-- **Photo library**: Browse your approved photos, filterable by year
-- **Queue monitor**: Slide-out panel with live stats, pause/resume, concurrency control, and ETA
-- **Background processing**: ARQ worker with rate limiting, automatic rescans, and retry for failed jobs
+**Find yourself in the wild.** Import your flight log from [my.flightradar24.com](https://my.flightradar24.com), and tailspotted automatically searches airplane spotter sites for photos of your exact aircraft — matched by tail number, airport, and date.
 
 ## Quick Start
 
+You don't need to clone this repo. Just download the compose file and run it:
+
 ```bash
-docker compose up
+curl -O https://raw.githubusercontent.com/isogonical/tailspotted/main/docker-compose.yml
+docker compose up -d
 ```
 
-Open [http://localhost:3981](http://localhost:3981) and upload your CSV.
+Open [http://localhost:3981](http://localhost:3981) and upload your FlightRadar24 CSV export. That's it.
 
-## Architecture
-
-| Container | Role |
-|-----------|------|
-| **web** | FastAPI + HTMX frontend (port 3981) |
-| **worker** | ARQ async task queue for scraping |
-| **postgres** | Flight and photo data |
-| **redis** | Job queue + rate limiting |
-
-## Tech Stack
-
-- FastAPI, Jinja2, HTMX
-- SQLAlchemy (async) + Alembic
-- ARQ (async Redis queue)
-- httpx + BeautifulSoup for scraping
-- PostgreSQL + Redis
-- Docker Compose
-
-## CSV Format
-
-Expects the export from my.flightradar24.com (blank first line, then header row with columns: Date, Flight number, From, To, Dep time, Arr time, Duration, Airline, Aircraft, Registration, etc.).
-
-## Photo Sources
-
-| Source | Status | Notes |
-|--------|--------|-------|
-| [Airliners.net](https://www.airliners.net) | Working | Primary source. Returns photos with airport codes and dates. |
-| [Airplane-Pictures.net](https://airplane-pictures.net) | Working | Uses advanced search API to filter by registration and airport. Has hotlink protection on thumbnails. |
-| [Planespotters.net](https://www.planespotters.net) | Working | Returns photos with airport metadata. |
-| [JetPhotos](https://www.jetphotos.com) | Working | Uses `curl_cffi` with browser impersonation to bypass Cloudflare protection. |
+> **Prerequisites:** [Docker](https://docs.docker.com/get-docker/) with the Compose plugin. Any system that can run Docker will work — Linux, macOS, Windows, Synology, Unraid, etc.
 
 ## How It Works
 
-1. **Upload** your FlightRadar24 CSV export at `/upload`
-2. The app parses flights, computes arrival dates/timezones, and stores them in Postgres
-3. **Scrape jobs** are created for each unique aircraft registration across all configured sources
-4. The ARQ background worker processes jobs with per-domain rate limiting (30 req/60s)
-5. Scraped photos are **scored** against your flights — registration match, airport match (departure or arrival), and date proximity all contribute to a 0–100 score
-6. Photos above the score threshold appear in the **review queue** for you to approve or reject
-7. Approved photos land in your **photo library**
+1. **Export** your flight history from [my.flightradar24.com](https://my.flightradar24.com) as CSV
+2. **Upload** the CSV at `/upload` — tailspotted parses your flights and computes arrival dates with full timezone awareness (red-eyes, date line crossings, etc.)
+3. **Scrape jobs** run in the background, searching four spotter photography sites for photos matching your aircraft registrations
+4. Each photo is **scored** (0–100) based on registration, airport, and date proximity
+5. **Review** candidate matches — approve or reject each one
+6. Approved photos go to your **library**, organized by flight
+
+## Features
+
+- **CSV import** with automatic deduplication — re-upload anytime without duplicates. Handles both native FlightRadar24 format and Excel-modified CSVs.
+- **Four photo sources** searched in parallel: [Airliners.net](https://www.airliners.net), [JetPhotos](https://www.jetphotos.com), [Planespotters.net](https://www.planespotters.net), [Airplane-Pictures.net](https://www.airplane-pictures.net)
+- **Smart matching** with ICAO/IATA airport normalization and date proximity scoring
+- **Review queue** with keyboard navigation (arrow keys)
+- **Photo library** filterable by year
+- **Queue monitor** — slide-out panel with live stats, pause/resume, concurrency control, and ETA
+- **Background processing** with rate limiting, automatic rescans, and retry on failure
+- **Data management** — delete individual flights or reset everything from the upload page
+
+## Architecture
+
+Four containers, all pulled automatically from GHCR:
+
+| Container | Image | Role |
+|-----------|-------|------|
+| **web** | `ghcr.io/isogonical/tailspotted` | FastAPI + HTMX frontend (port 3981) |
+| **worker** | `ghcr.io/isogonical/tailspotted-worker` | ARQ async task queue for scraping |
+| **postgres** | `postgres:16-alpine` | Flight and photo data |
+| **redis** | `redis:7-alpine` | Job queue + rate limiting |
+
+Data is persisted in a Docker volume (`pgdata`), so your flights and photos survive restarts and upgrades.
+
+## Updating
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+Migrations run automatically on startup.
+
+## Configuration
+
+The default [`docker-compose.yml`](https://github.com/isogonical/tailspotted/blob/main/docker-compose.yml) works out of the box. If you want to customize:
+
+| Environment Variable | Default | Description |
+|---------------------|---------|-------------|
+| `SECRET_KEY` | `change-me-in-production` | Session signing key |
+| `DATABASE_URL` | *(set in compose)* | PostgreSQL connection string |
+| `REDIS_URL` | *(set in compose)* | Redis connection string |
+
+To change the port, edit the `ports` mapping in the compose file (e.g., `"8080:8000"` to use port 8080).
+
+## CSV Format
+
+tailspotted accepts the standard export from [my.flightradar24.com](https://my.flightradar24.com). If you've edited the file in Excel, that's fine — common date format changes (like `M/D/YY`) are handled automatically.
+
+## Development
+
+For local development with hot reload and source-mounted volumes:
+
+```bash
+git clone https://github.com/isogonical/tailspotted.git
+cd tailspotted
+docker compose -f docker-compose.dev.yml up --build
+```
+
+## License
+
+Copyright 2026 Isogonical, LLC.
