@@ -38,10 +38,12 @@ def _parse_iso_datetime(raw: str | None) -> datetime | None:
 
 
 def _duration_minutes_to_time(minutes: int | None) -> time | None:
-    """Convert integer minutes to a time object."""
+    """Convert integer minutes to a time object (max 23:59)."""
     if minutes is None or minutes < 0:
         return None
     h, m = divmod(int(minutes), 60)
+    if h >= 24:
+        return time(23, 59)
     return time(h, m)
 
 

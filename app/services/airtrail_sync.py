@@ -32,7 +32,13 @@ async def test_airtrail_connection(url: str, api_key: str) -> tuple[bool, str]:
             )
         if resp.status_code == 200:
             data = resp.json()
-            count = len(data) if isinstance(data, list) else 0
+            if isinstance(data, list):
+                count = len(data)
+            elif isinstance(data, dict):
+                flights = data.get("flights", data)
+                count = len(flights) if isinstance(flights, (list, dict)) else 0
+            else:
+                count = 0
             return True, f"Connected — {count} flights available"
         if resp.status_code == 401:
             return False, "Authentication failed — check your API key"
