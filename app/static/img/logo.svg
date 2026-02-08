@@ -12,6 +12,20 @@
       <stop offset="0" style="stop-color:#3d6a88;stop-opacity:0.5"/>
       <stop offset="1" style="stop-color:#1a3a52;stop-opacity:0.2"/>
     </radialGradient>
+    <filter id="tailGlow">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="tailGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#b0bec5;stop-opacity:1"/>
+    </linearGradient>
+    <clipPath id="windowClip">
+      <rect x="-113.94" y="-213.53" width="494" height="694" rx="85"/>
+    </clipPath>
   </defs>
 
   <!-- Window glow -->
@@ -27,22 +41,15 @@
   <rect x="-113.94" y="-213.53" width="494" height="694" rx="85" fill="#234a68" opacity="0.7"/>
   <rect x="-113.94" y="-213.53" width="494" height="694" rx="85" fill="url(#glassShine)"/>
 
-  <!-- Green viewfinder brackets -->
-  <g stroke="#4ade80" stroke-width="7" fill="none" stroke-linecap="round" opacity="0.85" transform="translate(-378.942,-378.529)">
-    <polyline points="360,290 300,290 300,350"/>
-    <polyline points="664,290 724,290 724,350"/>
-    <polyline points="360,734 300,734 300,674"/>
-    <polyline points="664,734 724,734 724,674"/>
+  <!-- Tail silhouette (clipped to window, offset for natural glimpse) -->
+  <g clip-path="url(#windowClip)">
+    <g transform="translate(170, 95) scale(1.45) translate(-140.5, -116)" opacity="0.88" filter="url(#tailGlow)">
+      <path d="M -67.964 -27.341 L 68.078 258.813 L 315.357 258.025 C 343.432 260.794 349.021 234.468 326.522 216.487 L 74.423 -26.74 L -67.964 -27.341 Z"
+        fill="url(#tailGrad)" stroke="none"/>
+    </g>
   </g>
 
-  <!-- Crosshair tick marks -->
-  <g stroke="#4ade80" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5">
-    <line x1="133" y1="-195" x2="133" y2="-165"/>
-    <line x1="133" y1="432" x2="133" y2="462"/>
-    <line x1="-98" y1="133" x2="-68" y2="133"/>
-    <line x1="334" y1="133" x2="364" y2="133"/>
-  </g>
-
-  <!-- Tail silhouette -->
-  <path d="M -67.964 -27.341 L 68.078 258.813 L 315.357 258.025 C 343.432 260.794 349.021 234.468 326.522 216.487 L 74.423 -26.74 L -67.964 -27.341 Z" fill="#fff" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Window shade pull tab -->
+  <rect x="108" y="455" width="50" height="14" rx="7" fill="#4a90d9" opacity="0.6"/>
+  <rect x="118" y="459" width="30" height="6" rx="3" fill="#5ba8ff" opacity="0.4"/>
 </svg>

@@ -1,15 +1,16 @@
 {% extends "base.html" %}
-{% block title %}{{ flight.flight_number or 'Flight' }} — Tailspotted{% endblock %}
+{% block title %}{{ flight.flight_number or 'Flight' }} — tailspotted{% endblock %}
 {% block content %}
-<div class="flight-detail">
+<div class="page-header">
     <a href="/flights" class="back-link">&larr; Back to flights</a>
-
     <h1>
         {{ flight.flight_number or 'Flight' }}
         <span class="route-large">
             {{ flight.departure_airport_iata or '???' }} &rarr; {{ flight.arrival_airport_iata or '???' }}
         </span>
     </h1>
+</div>
+<div class="flight-detail">
 
     <div class="detail-grid">
         <div class="detail-card">

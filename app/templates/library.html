@@ -1,7 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Library — Tailspotted{% endblock %}
+{% block title %}Library — tailspotted{% endblock %}
 {% block content %}
-<h1>Library</h1>
+<div class="page-header">
+    <h1>Library</h1>
+</div>
 
 <div class="filters">
     <a href="/library?status=approved{% if selected_year %}&year={{ selected_year }}{% endif %}"

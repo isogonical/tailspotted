@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Tailspotted{% endblock %}</title>
+    <title>{% block title %}tailspotted{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -13,7 +13,7 @@
 <body>
     <nav class="navbar">
         <div class="nav-brand">
-            <a href="/flights">Tailspotted</a>
+            <a href="/"><img src="/static/img/logo.svg" alt="" class="nav-logo">tailspotted</a>
         </div>
         <div class="nav-links">
             <a href="/upload" {% if request.url.path == '/upload' %}class="active"{% endif %}>Upload</a>
@@ -39,5 +39,8 @@
     <main class="container">
         {% block content %}{% endblock %}
     </main>
+    <footer class="site-footer">
+        Copyright &copy; 2026 Isogonical, LLC &middot; <a href="https://github.com/isogonical/tailspotted">GitHub</a>
+    </footer>
 </body>
 </html>

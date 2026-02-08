@@ -2,11 +2,11 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import func, select
 
-from app.routes import flights, library, photos, queue, upload
+from app.routes import flights, home, library, photos, queue, upload
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -35,20 +35,16 @@ async def lifespan(app: FastAPI):
     logger.info("Tailspotted shutting down")
 
 
-app = FastAPI(title="Tailspotted", lifespan=lifespan)
+app = FastAPI(title="tailspotted", lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
+app.include_router(home.router)
 app.include_router(upload.router)
 app.include_router(flights.router)
 app.include_router(photos.router)
 app.include_router(library.router)
 app.include_router(queue.router)
-
-
-@app.get("/")
-async def root():
-    return RedirectResponse(url="/flights")
 
 
 @app.get("/review/count", response_class=HTMLResponse)

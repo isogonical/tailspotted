@@ -1,8 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Upload — Tailspotted{% endblock %}
+{% block title %}Upload — tailspotted{% endblock %}
 {% block content %}
-<h1>Import Flight Log</h1>
-<p style="color: var(--text-muted); margin-bottom: 24px;">Upload your CSV export from <a href="https://my.flightradar24.com" target="_blank">my.flightradar24.com</a>.</p>
+<div class="page-header">
+    <h1>Upload</h1>
+    <p class="page-subtitle">Import your CSV export from <a href="https://my.flightradar24.com" target="_blank">my.flightradar24.com</a>.</p>
+</div>
 
 <form hx-post="/upload" hx-target="#upload-result" hx-swap="innerHTML" hx-encoding="multipart/form-data" class="upload-form">
     <label class="upload-zone" id="drop-zone">

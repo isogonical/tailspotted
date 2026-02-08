@@ -1,8 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Review Photos — Tailspotted{% endblock %}
+{% block title %}Review Photos — tailspotted{% endblock %}
 {% block content %}
-<div class="review-container">
+<div class="page-header">
     <h1>Review <span class="count" id="pending-count" hx-get="/review/pending-count" hx-trigger="reviewCountChanged from:body" hx-swap="innerHTML">({{ pending_count }} pending)</span></h1>
+</div>
+<div class="review-container">
 
     <div id="review-card">
     {% if match %}

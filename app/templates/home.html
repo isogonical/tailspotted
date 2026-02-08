@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}tailspotted — Home{% endblock %}
+
+{% block content %}
+{% if has_data %}
+{# ===== Dashboard ===== #}
+<div class="page-header">
+    <h1>Dashboard</h1>
+</div>
+
+<div class="dash-stats">
+    <div class="dash-stat-card">
+        <h3>Flights</h3>
+        <div class="dash-stat-number">{{ total_flights }}</div>
+        {% if first_date and last_date %}
+        <div class="dash-stat-sub">{{ first_date.strftime('%b %Y') }} &ndash; {{ last_date.strftime('%b %Y') }}</div>
+        {% endif %}
+    </div>
+    <div class="dash-stat-card">
+        <h3>Photos Found</h3>
+        <div class="dash-stat-number dash-accent">{{ total_photos }}</div>
+    </div>
+    <div class="dash-stat-card">
+        <h3>Matches</h3>
+        <div class="dash-stat-number dash-accent">{{ total_matches }}</div>
+    </div>
+    <div class="dash-stat-card">
+        <h3>Approved</h3>
+        <div class="dash-stat-number dash-green">{{ approved }}</div>
+    </div>
+</div>
+
+<div class="dash-info-row">
+    <div class="dash-info-card">
+        <h3>Review Queue</h3>
+        {% if pending_review > 0 %}
+        <div class="dash-stat-number dash-accent" style="margin-bottom:12px;">{{ pending_review }}</div>
+        <p>photos waiting for review</p>
+        <a href="/review" class="btn btn-primary btn-small" style="margin-top:12px;">Review Now</a>
+        {% else %}
+        <p>All caught up! No photos to review.</p>
+        {% endif %}
+    </div>
+    <div class="dash-info-card">
+        <h3>Collection</h3>
+        <div class="dash-mini-stats">
+            <div><span class="dash-mini-num">{{ unique_aircraft }}</span> aircraft types</div>
+            <div><span class="dash-mini-num">{{ unique_airlines }}</span> airlines</div>
+            <div><span class="dash-mini-num dash-red">{{ rejected }}</span> rejected</div>
+        </div>
+    </div>
+    <div class="dash-info-card">
+        <h3>Scraper Activity</h3>
+        <div class="dash-mini-stats">
+            {% if running_jobs > 0 %}
+            <div><span class="status-dot status-dot-running"></span> {{ running_jobs }} running</div>
+            {% endif %}
+            {% if pending_jobs > 0 %}
+            <div><span class="status-dot status-dot-pending"></span> {{ pending_jobs }} queued</div>
+            {% endif %}
+            {% if running_jobs == 0 and pending_jobs == 0 %}
+            <div>Idle &mdash; no active jobs</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if recent_flights %}
+<h2>Recent Flights</h2>
+<table class="flight-table">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Flight</th>
+            <th>Route</th>
+            <th>Aircraft</th>
+            <th>Registration</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for f in recent_flights %}
+        <tr class="flight-row" onclick="window.location='/flights/{{ f.id }}'">
+            <td>{{ f.date.strftime('%Y-%m-%d') }}</td>
+            <td>{{ f.flight_number or '—' }}</td>
+            <td class="route">
+                <span class="airport">{{ f.departure_airport_iata or '?' }}</span>
+                <span class="arrow">&rarr;</span>
+                <span class="airport">{{ f.arrival_airport_iata or '?' }}</span>
+            </td>
+            <td>{{ f.aircraft or '—' }}</td>
+            <td>{% if f.registration %}<span class="reg-pill">{{ f.registration }}</span>{% else %}—{% endif %}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<div style="margin-top:16px;">
+    <a href="/flights" class="btn btn-small">View All Flights</a>
+</div>
+{% endif %}
+
+{% else %}
+{# ===== Getting Started ===== #}
+<div class="getting-started">
+    <img src="/static/img/logo.svg" alt="tailspotted" class="gs-logo">
+    <h1>tailspotted</h1>
+    <p class="gs-tagline">Find yourself in the wild</p>
+
+    <div class="gs-steps">
+        <div class="gs-step">
+            <div class="gs-step-num">1</div>
+            <h2>Upload Your Flights</h2>
+            <p>Export your flight history as a CSV from my.flightradar24.com and upload it here.</p>
+            <a href="/upload" class="btn btn-primary" style="margin-top:12px;">Upload CSV</a>
+        </div>
+        <div class="gs-step">
+            <div class="gs-step-num">2</div>
+            <h2>Automatic Photo Search</h2>
+            <p>tailspotted searches airplane spotter sites for photos matching your aircraft registrations and routes.</p>
+        </div>
+        <div class="gs-step">
+            <div class="gs-step-num">3</div>
+            <h2>Review &amp; Approve</h2>
+            <p>Browse matched photos, approve the ones you like, and build a personal library of your flights.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
