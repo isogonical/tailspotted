@@ -23,6 +23,17 @@ _SEAT_TYPE_MAP = {
 }
 
 
+def _str_val(val) -> str:
+    """Extract a string from a value that might be a dict, list, or primitive."""
+    if val is None:
+        return ""
+    if isinstance(val, dict):
+        return str(val.get("name") or val.get("value") or val.get("code") or "")
+    if isinstance(val, (list, tuple)):
+        return ""
+    return str(val)
+
+
 def _parse_iso_datetime(raw: str | None) -> datetime | None:
     """Parse ISO 8601 timestamp to UTC datetime."""
     if not raw:
@@ -154,7 +165,7 @@ def parse_airtrail_json(file_content: str) -> tuple[list[Flight], uuid.UUID]:
             import_batch_id=batch_id,
             row_index=row_idx,
             date=dep_date,
-            flight_number=(entry.get("flightNumber") or entry.get("flight_number") or "").strip() or None,
+            flight_number=_str_val(entry.get("flightNumber") or entry.get("flight_number")).strip() or None,
             departure_city=dep_city,
             departure_airport_name=dep_name,
             departure_airport_iata=dep_iata,
@@ -169,14 +180,14 @@ def parse_airtrail_json(file_content: str) -> tuple[list[Flight], uuid.UUID]:
             departure_datetime_utc=dep_dt_utc,
             arrival_datetime_utc=arr_dt_utc,
             arrival_date=arrival_date,
-            airline=(entry.get("airline") or "").strip() or None,
-            aircraft=(entry.get("aircraft") or entry.get("aircraftType") or "").strip() or None,
-            registration=(entry.get("aircraftReg") or entry.get("registration") or "").strip() or None,
+            airline=_str_val(entry.get("airline")).strip() or None,
+            aircraft=_str_val(entry.get("aircraft") or entry.get("aircraftType")).strip() or None,
+            registration=_str_val(entry.get("aircraftReg") or entry.get("registration")).strip() or None,
             seat_number=str(seat_number).strip() if seat_number else None,
             seat_type=seat_type,
             flight_class=flight_class,
             flight_reason=None,
-            note=(entry.get("note") or entry.get("notes") or "").strip() or None,
+            note=_str_val(entry.get("note") or entry.get("notes")).strip() or None,
         )
         flights.append(flight)
 

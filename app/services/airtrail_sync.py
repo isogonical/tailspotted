@@ -12,6 +12,7 @@ from app.services.parsers.airtrail import (
     _SEAT_TYPE_MAP,
     _duration_minutes_to_time,
     _parse_iso_datetime,
+    _str_val,
 )
 from app.services.timezone_resolver import resolve_airport_code
 
@@ -158,7 +159,7 @@ async def sync_airtrail_flights(
             import_batch_id=batch_id,
             row_index=row_idx,
             date=dep_date,
-            flight_number=(entry.get("flightNumber") or entry.get("flight_number") or "").strip() or None,
+            flight_number=_str_val(entry.get("flightNumber") or entry.get("flight_number")).strip() or None,
             departure_city=dep_city,
             departure_airport_name=dep_name,
             departure_airport_iata=dep_iata,
@@ -173,14 +174,14 @@ async def sync_airtrail_flights(
             departure_datetime_utc=dep_dt_utc,
             arrival_datetime_utc=arr_dt_utc,
             arrival_date=arrival_date,
-            airline=(entry.get("airline") or "").strip() or None,
-            aircraft=(entry.get("aircraft") or entry.get("aircraftType") or "").strip() or None,
-            registration=(entry.get("aircraftReg") or entry.get("registration") or "").strip() or None,
+            airline=_str_val(entry.get("airline")).strip() or None,
+            aircraft=_str_val(entry.get("aircraft") or entry.get("aircraftType")).strip() or None,
+            registration=_str_val(entry.get("aircraftReg") or entry.get("registration")).strip() or None,
             seat_number=str(seat_number).strip() if seat_number else None,
             seat_type=seat_type,
             flight_class=flight_class,
             flight_reason=None,
-            note=(entry.get("note") or entry.get("notes") or "").strip() or None,
+            note=_str_val(entry.get("note") or entry.get("notes")).strip() or None,
         )
         flights.append(flight)
 
